@@ -43,6 +43,12 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import static java.lang.String.format;
+import org.eclipse.jgit.events.IndexChangedEvent;
+import org.eclipse.jgit.events.IndexChangedListener;
+import org.eclipse.jgit.events.RefsChangedEvent;
+import org.eclipse.jgit.events.RefsChangedListener;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.util.FS;
 
 /**
  * @understands versioning cruise-config
@@ -65,8 +71,14 @@ public class ConfigRepository {
     public ConfigRepository(SystemEnvironment systemEnvironment) throws IOException {
         workingDir = systemEnvironment.getConfigRepoDir();
         File configRepoDir = new File(workingDir, ".git");
-        gitRepo = new FileRepository(configRepoDir);
+        gitRepo = FileRepositoryBuilder.create(configRepoDir);
         git = new Git(gitRepo);
+        git.getRepository().getListenerList().addIndexChangedListener(new IndexChangedListener() {
+            @Override
+            public void onIndexChanged(IndexChangedEvent event) {
+                FS.detect().runHookIfPresent(gitRepo, "post-commit", new String[]{});
+            }
+        });
     }
 
     public void initialize() throws IOException {
