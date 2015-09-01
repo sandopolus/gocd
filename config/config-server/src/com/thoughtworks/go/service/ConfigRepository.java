@@ -44,6 +44,8 @@ import java.util.Iterator;
 import static java.lang.String.format;
 import org.eclipse.jgit.events.IndexChangedEvent;
 import org.eclipse.jgit.events.IndexChangedListener;
+import org.eclipse.jgit.events.RefsChangedEvent;
+import org.eclipse.jgit.events.RefsChangedListener;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.FS;
 
@@ -70,9 +72,10 @@ public class ConfigRepository {
         File configRepoDir = new File(workingDir, ".git");
         gitRepo = FileRepositoryBuilder.create(configRepoDir);
         git = new Git(gitRepo);
-        git.getRepository().getListenerList().addIndexChangedListener(new IndexChangedListener() {
+        git.getRepository().getListenerList().addRefsChangedListener(new RefsChangedListener() {
             @Override
-            public void onIndexChanged(IndexChangedEvent event) {
+            public void onRefsChanged(RefsChangedEvent event) {
+                LOGGER.info("Running onRefsChanged post-commit hook");
                 FS.detect().runHookIfPresent(gitRepo, "post-commit", new String[]{});
             }
         });
